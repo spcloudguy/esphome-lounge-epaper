@@ -1,5 +1,6 @@
 sensor:
   - platform: rest
+    # Get car location from GPS
     name: MGZS Car Location Details
     value_template: "{{ value_json.features[0].properties.formatted }}"
     json_attributes_path: "$.features[0].properties"
@@ -26,3 +27,28 @@ sensor:
         + state_attr('device_tracker.lsjw74098nz214697_vehicle_position', 'longitude') | string
         + "&apiKey=<REDACTED>"
       }}
+  - platform: template
+    # Get train times, uses Public Transport Victoria addin
+    sensors:
+      next_trains:
+        friendly_name: "Next Train Times"
+        value_template: >
+          {% set json_data = [
+            { "time": state_attr('sensor.pakenham_line_to_city_flinders_street_from_hughesdale_station_0', 'scheduled_departure_utc') | default('') },
+            { "time": state_attr('sensor.pakenham_line_to_city_flinders_street_from_hughesdale_station_1', 'scheduled_departure_utc') | default('') },
+            { "time": state_attr('sensor.pakenham_line_to_city_flinders_street_from_hughesdale_station_2', 'scheduled_departure_utc') | default('') },
+            { "time": state_attr('sensor.pakenham_line_to_city_flinders_street_from_hughesdale_station_3', 'scheduled_departure_utc') | default('') }
+          ] %}
+
+          {% set now = now() %}
+          {% set future_time_threshold = now + timedelta(minutes=0) %}
+          {% set future_times = json_data | selectattr('time', 'defined') | selectattr('time', '!=', '') | map(attribute='time') | map('as_datetime', none) | select('!=', none) | select('>', future_time_threshold) | list %}
+
+          {% set formatted_times = future_times | map('as_timestamp') | map('timestamp_custom', '%H:%M', true) | list %}
+          {% set times_string = formatted_times | join(', ') %}
+
+          {% if times_string %}
+            {{ times_string }}
+          {% else %}
+            No upcoming trains
+          {% endif %}
