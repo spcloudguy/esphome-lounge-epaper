@@ -1,0 +1,28 @@
+sensor:
+  - platform: rest
+    name: MGZS Car Location Details
+    value_template: "{{ value_json.features[0].properties.formatted }}"
+    json_attributes_path: "$.features[0].properties"
+    json_attributes:
+      - lon
+      - lat
+      - district
+      - city
+      - postcode
+      - street
+      - housenumber
+      - state
+      - country
+      - country_code
+      - suburb
+      - street
+    verify_ssl: true
+    scan_interval: 31556926
+    resource_template: >
+      {{
+        "https://api.geoapify.com/v1/geocode/reverse?lat="
+        + state_attr('device_tracker.lsjw74098nz214697_vehicle_position', 'latitude') | string
+        + "&lon="
+        + state_attr('device_tracker.lsjw74098nz214697_vehicle_position', 'longitude') | string
+        + "&apiKey=<REDACTED>"
+      }}
