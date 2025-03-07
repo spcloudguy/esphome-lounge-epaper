@@ -52,3 +52,33 @@ sensor:
           {% else %}
             No upcoming trains
           {% endif %}
+  - platform: template
+  # Requires AUS BOM weather addin
+    sensors:
+      murrumbeena_uv_end_time:
+        friendly_name: "Murrumbeena UV End Time"
+        value_template: >
+          {% if states('sensor.murrumbeena_uv_end_time_0') != 'unknown' %}
+            {{ as_timestamp(states('sensor.murrumbeena_uv_end_time_0')) | timestamp_custom('%H:%M') }}
+          {% else %}
+            unknown
+          {% endif %}
+      murrumbeena_uv_start_time:
+        friendly_name: "Murrumbeena UV Start Time"
+        value_template: >
+          {% if states('sensor.murrumbeena_uv_start_time_0') != 'unknown' %}
+            {{ as_timestamp(states('sensor.murrumbeena_uv_start_time_0')) | timestamp_custom('%H:%M') }}
+          {% else %}
+            unknown
+          {% endif %}
+      sunblock_required:
+        friendly_name: "Sun Block Required"
+        value_template: >
+          {% set start_time = states('sensor.murrumbeena_uv_start_time') %}
+          {% set end_time = states('sensor.murrumbeena_uv_end_time') %}
+          {% set current_time = now().strftime('%H:%M') %}
+          {% if start_time != 'unknown' and end_time != 'unknown' and current_time <= end_time %}
+            Sun block {{ start_time }} - {{ end_time }}
+          {% else %}
+            No sunblock needed
+          {% endif %}
